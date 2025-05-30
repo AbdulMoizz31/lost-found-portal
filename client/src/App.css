@@ -1,4 +1,4 @@
-#root {
+/* #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
@@ -40,3 +40,220 @@
 .read-the-docs {
   color: #888;
 }
+ */
+
+
+ .light-green-bg {
+  background-color: #ACEB98;
+}
+.secondary-white {
+  color: #adacb2;
+}
+.primary-green{
+  color: #87FF65 !important
+}
+.primary-green-bg{
+  background-color: #87FF65 !important
+}
+.primary-lightgreen{
+  color: #caf3be !important
+}
+.primary-lightgreen-bg{
+  background-color: #caf3be !important
+}
+.primary-sky{
+  color: #A4C2A8 !important
+
+}
+.primary-sky-bg{
+  background-color: #A4C2A8 !important
+
+}
+
+.primary-dark{
+  color: #5A5A66 !important
+
+}
+
+.primary-dark-bg{
+  background-color: #5A5A66 !important;
+}
+
+
+.btn {
+  &:hover,
+  &:active,
+  &:focus,
+  &.active,
+  &.show {
+    border-color: transparent !important;
+  }
+}
+
+
+
+
+
+
+.btn-outline-primary {
+  border-color: #252525 !important;
+  color: #252525;
+  font-size: responsive-size(0.75rem, 1rem, 1vw);
+}
+
+.btn-outline-danger {
+  color: #db4242 !important;
+  border-color: #db4242 !important;
+  font-size: responsive-size(0.75rem, 1rem, 1vw); 
+  
+
+  &:hover {
+    color: white !important;
+  }
+  
+  &:active {
+    transform: scale(1.02);
+  }
+}
+
+.btn-primary-green {
+  color: white !important;
+  font-weight: 500 !important;
+  background-color: #6de6a3 !important;
+  border: 2px solid #afdbc3 !important;
+  font-size: responsive-size(0.75rem, 1rem, 1vw);
+
+  &:hover {
+    color: #afdbc3 !important;
+    background: transparent !important;
+    border: 2px solid #afdbc3 !important;
+  }
+  
+  &:active {
+    transform: scale(1.02);
+  }
+}
+
+.btn-primary-green-outline {
+  color:#afdbc3 !important;
+  background: transparent !important;
+  border: 2px solid #afdbc3 !important;
+  font-weight: 500 !important;
+  font-size: responsive-size(0.75rem, 1rem, 1vw); 
+  &:hover {
+    color: white !important;
+    background-color: #afdbc3 !important;
+    border: 2px solid #afdbc3 !important;
+  }
+  
+  &:active {
+    transform: scale(1.02);
+  }
+}
+
+.btn-primary-red {
+  color: white !important;
+  font-weight: 500 !important;
+  background-color:  #db4242;
+  border: 2px solid  #db4242 !important;
+  font-size: responsive-size(0.75rem, 1rem, 1vw);
+
+  &:hover {
+    color:  #db4242 !important;
+    background: transparent !important;
+    border: 2px solid  #db4242 !important;
+  }
+  
+  &:active {
+    transform: scale(1.02);
+  }
+}
+
+.btn-primary-red-outline {
+  color:  #db4242 !important;
+  background: transparent !important;
+  border: 2px solid  #db4242 !important;
+  font-weight: 500 !important;
+  font-size: responsive-size(0.75rem, 1rem, 1vw); 
+
+  &:hover {
+    color: white !important;
+    background-color:  #db4242 !important;
+    border: 2px solid  #db4242 !important;
+  }
+  
+  &:active {
+    transform: scale(1.02);
+  }
+}
+
+.btn-primary-black-outline {
+  color: #252525 !important;
+  background: transparent !important;
+  border: 1px solid #252525 !important;
+  font-weight: 500 !important;
+  font-size: responsive-size(0.75rem, 1rem, 1vw);/* 
+  padding: responsive-size(0.5rem, 1rem, 1vw) responsive-size(1rem, 2rem, 1vw); */
+
+  &:hover {
+    color: white !important;
+    background-color: #252525 !important;
+    border: 1px solid #252525 !important;
+  }
+  
+  &:active {
+    transform: scale(1.02);
+  }
+}
+
+
+.font-size-10 {
+  font-size: 10px !important; }
+
+.font-size-11 {
+  font-size: 11px !important; }
+
+.font-size-12 {
+  font-size: 12px !important; }
+
+.font-size-13 {
+  font-size: 13px !important; }
+
+.font-size-14 {
+  font-size: 14px !important; }
+
+.font-size-15 {
+  font-size: 15px !important; }
+
+.font-size-16 {
+  font-size: 16px !important; }
+
+.font-size-17 {
+  font-size: 17px !important; }
+
+.font-size-18 {
+  font-size: 18px !important; }
+
+.font-size-20 {
+  font-size: 20px !important; }
+
+.font-size-22 {
+  font-size: 22px !important; }
+
+.font-size-24 {
+  font-size: 24px !important; }
+
+.font-size-32 {
+  font-size: clamp(28px, 2.5vw, 32px); }
+
+.font-size-40 {
+  font-size: clamp(35px, 2.5vw, 40px); }
+
+.font-size-56 {
+  font-size: clamp(40px, 3.5vw, 56px); }
+
+.fw-medium {
+  font-weight: 500; }
+
+.fw-semibold {
+  font-weight: 500; }
