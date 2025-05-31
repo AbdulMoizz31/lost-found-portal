@@ -1,5 +1,6 @@
 // ThreeSectionNavbar.js
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
   Navbar,
   Nav,
@@ -25,20 +26,13 @@ const ThreeSectionNavbar = () => {
             <NavLink href="/about" className="text-dark fw-semibold">About</NavLink>
           </NavItem>
           <NavItem>
-            <NavLink href="/services" className="text-dark fw-semibold">Services</NavLink>
+            <NavLink href="/claim-requests" className="text-dark fw-semibold">Claim Requests</NavLink>
           </NavItem>
         </Nav>
-        <button className="btn btn-success px-4">Login</button>
+        <Link to={'/login'}><button className="btn btn-success px-4">Login</button></Link>
       </Container>
     </Navbar>
   );
 };
-
-
-
- 
-
-
-
 
 export default ThreeSectionNavbar;

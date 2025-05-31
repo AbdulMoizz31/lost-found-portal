@@ -13,11 +13,12 @@ import {
 } from "reactstrap"
 import { useFormik } from "formik"
 import * as Yup from "yup"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 
 
 const SignUp = () => {
-  document.title = "Login | Dock Tok"
+  document.title = "Signup UMT lost-found-portal"
+  const navigate = useNavigate()
 
   const validation = useFormik({
     initialValues: {
@@ -31,7 +32,7 @@ const SignUp = () => {
       password: Yup.string().required("Please enter your password"),
     }),
     onSubmit: values => {
-      // Handle login logic here
+      navigate('/')
       console.log("Login submitted:", values)
     },
   })
