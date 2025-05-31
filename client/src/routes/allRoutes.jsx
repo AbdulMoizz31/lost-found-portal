@@ -8,15 +8,18 @@ import ChatSystem from "../pages/chat"
 
 
 const allRoutes = [
-  { path: "/login", component: <Login/> },
-  { path: "/sign-up", component: <SignUp/> },
+  
   { path: "/", component: <Home/> },
    { path: "/add-item", component: <AddItemForm/> },
   { path: "/claim/:id", component: <ClaimItemForm/> },
   { path: "/claim-requests", component: <ClaimRequests/> },
-/*   { path: "/chat", component: <ChatSystem/> }, */
+  { path: "/chat", component: <ChatSystem/> },
+]
+const nonAuthRoutes = [
+  { path: "/login", component: <Login/> },
+  { path: "/sign-up", component: <SignUp/> }
 ]
 
 
 
-export {allRoutes}
+export {allRoutes, nonAuthRoutes}

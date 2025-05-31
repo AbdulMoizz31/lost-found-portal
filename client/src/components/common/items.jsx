@@ -139,10 +139,11 @@ const ItemDetailsModal = ({ itemId, show, onHide, items }) => {
                     Claim Item
                   </button></Link>
                 ) : (
+                  <Link to={'/add-item'}>
                   <button type="button" className="btn btn-info">
                     <i className="bi bi-eye me-1"></i>
                     I Found This
-                  </button>
+                  </button></Link>
                 )}
               </div>
             </div>

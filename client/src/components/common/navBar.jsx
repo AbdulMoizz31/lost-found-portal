@@ -11,6 +11,7 @@ import {
 } from 'reactstrap';
 
 const ThreeSectionNavbar = () => {
+  const user = 'user'
   return (
     <Navbar  light expand="md" className=" shadow-sm py-3">
       <Container className="d-flex justify-content-between align-items-center">
@@ -29,7 +30,8 @@ const ThreeSectionNavbar = () => {
             <NavLink href="/claim-requests" className="text-dark fw-semibold">Claim Requests</NavLink>
           </NavItem>
         </Nav>
-        <Link to={'/login'}><button className="btn btn-success px-4">Login</button></Link>
+        {user? <button className="btn btn-success px-4">Logout</button>:
+         <Link to={'/login'}><button className="btn btn-success px-4">Login</button></Link>}
       </Container>
     </Navbar>
   );

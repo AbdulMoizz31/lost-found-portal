@@ -1,12 +1,15 @@
-import React from 'react';
-import { Package } from 'lucide-react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import React, { useState } from 'react';
+import { Package, Camera, Upload, X } from 'lucide-react';
+import { Formik, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { useState } from 'react';
-import { Camera, Upload, X, User, Mail, Phone, MapPin, Calendar, FileText, CheckCircle } from 'lucide-react';
+import { db } from '../services/firebase';
+import { addDoc, collection } from 'firebase/firestore';
+import { Toast } from 'reactstrap';
+  import { ToastContainer, toast } from 'react-toastify';
 
 const AddItemForm = () => {
-      const [uploadedImages, setUploadedImages] = useState([]);
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
   const validationSchema = Yup.object({
     title: Yup.string()
       .min(3, 'Title must be at least 3 characters')
@@ -26,31 +29,9 @@ const AddItemForm = () => {
       .required('Email is required'),
     contactPhone: Yup.string()
       .matches(/^(\+92|0)?[0-9]{10,11}$/, 'Please enter a valid phone number')
-      .required('Phone number is required')
+      .required('Phone number is required'),
   });
 
-  const handleImageUpload = (event) => {
-    const files = Array.from(event.target.files);
-    const newImages = files.map(file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      file: file,
-      preview: URL.createObjectURL(file),
-      name: file.name
-    }));
-    setUploadedImages(prev => [...prev, ...newImages].slice(0, 5)); // Max 5 images
-  };
-  
-  const removeImage = (imageId) => {
-    setUploadedImages(prev => {
-      const updated = prev.filter(img => img.id !== imageId);
-      // Clean up object URL
-      const removedImage = prev.find(img => img.id === imageId);
-      if (removedImage) {
-        URL.revokeObjectURL(removedImage.preview);
-      }
-      return updated;
-    });
-  };
   const initialValues = {
     title: '',
     description: '',
@@ -60,7 +41,7 @@ const AddItemForm = () => {
     status: 'lost',
     contactName: '',
     contactEmail: '',
-    contactPhone: ''
+    contactPhone: '',
   };
 
   const categories = [
@@ -72,16 +53,112 @@ const AddItemForm = () => {
     'Documents',
     'Keys',
     'Jewelry',
-    'Other'
+    'Other',
   ];
 
-  const handleSubmit = (values) => {
-    console.log('Form submitted:', values);
-    alert('Item added successfully!');
+  // Convert file to base64
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
   };
 
+  const handleImageUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    
+    if (uploadedImages.length + files.length > 5) {
+      alert('You can only upload up to 5 images');
+      return;
+    }
+
+    setIsUploading(true);
+    
+    try {
+      const newImages = await Promise.all(
+        files.map(async (file) => {
+          const base64 = await convertToBase64(file);
+          return {
+            id: Math.random().toString(36).substr(2, 9),
+            file: file,
+            preview: URL.createObjectURL(file),
+            name: file.name,
+            base64: base64,
+            size: file.size,
+            type: file.type
+          };
+        })
+      );
+
+      setUploadedImages((prev) => [...prev, ...newImages].slice(0, 5));
+    } catch (error) {
+      console.error('Error processing images:', error);
+      alert('Error processing images. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeImage = (imageId) => {
+    setUploadedImages((prev) => {
+      const updated = prev.filter((img) => img.id !== imageId);
+      const removedImage = prev.find((img) => img.id === imageId);
+      if (removedImage) {
+        URL.revokeObjectURL(removedImage.preview);
+      }
+      return updated;
+    });
+  };
+
+  const handleSubmit = async (values, { setSubmitting, resetForm }) => {
+    console.log('Form submitted:', values);
+    console.log('Images:', uploadedImages);
+    
+    try {
+      // Prepare image data for submission
+      const imageData = uploadedImages.map(img => ({
+        name: img.name,
+        base64: img.base64,
+        size: img.size,
+        type: img.type
+      }));
+
+      // Include images in the document data
+      const documentData = {
+        ...values,
+        images: imageData,
+        imageCount: imageData.length,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      const res = await addDoc(collection(db, 'items'), documentData);
+      console.log('Document added with ID:', res.id);
+
+      if (res) {
+/*         alert('Item added successfully'); */
+      /*   resetForm(); */
+        setUploadedImages([]);
+        toast.success('item added successfully')
+        // Clean up preview URLs
+        uploadedImages.forEach(img => {
+          if (img.preview) {
+            URL.revokeObjectURL(img.preview);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error adding item:', error);
+      alert('Error adding item: ' + error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
   return (
     <div className="container-fluid ">
+      <ToastContainer />
       <div className="container">
         <div className="row">
           <div className="col-12">
@@ -92,230 +169,310 @@ const AddItemForm = () => {
               </h2>
               <hr className="w-25 mx-auto" />
             </div>
-            <div className="card shadow-sm shadow-sm">
+            <div className="card shadow-sm">
               <div className="card-body p-5">
-              <Formik
-                initialValues={initialValues}
-                validationSchema={validationSchema}
-                onSubmit={handleSubmit}
-              >
-                {({ isSubmitting }) => (
-                  <div>
-                    <div className="row">
-                      <div className="col-md-6">
-                        <div className="mb-4">
-                          <label className="form-label fw-semibold text-muted small text-uppercase">Item Title *</label>
-                          <Field
-                            type="text"
-                            name="title"
-                            className="form-control"
-                            placeholder="e.g., iPhone 13 Pro"
-                          />
-                          <ErrorMessage name="title" component="div" className="text-danger small mt-1" />
-                        </div>
-
-                        <div className="mb-4">
-                          <label className="form-label fw-semibold text-muted small text-uppercase">Category *</label>
-                          <Field as="select" name="category" className="form-select">
-                            <option value="">Select category</option>
-                            {categories.map(cat => (
-                              <option key={cat} value={cat}>{cat}</option>
-                            ))}
-                          </Field>
-                          <ErrorMessage name="category" component="div" className="text-danger small mt-1" />
-                        </div>
-
-                        <div className="mb-4">
-                          <label className="form-label fw-semibold text-muted small text-uppercase">Location *</label>
-                          <Field
-                            type="text"
-                            name="location"
-                            className="form-control"
-                            placeholder="e.g., Library 2nd Floor"
-                          />
-                          <ErrorMessage name="location" component="div" className="text-danger small mt-1" />
-                        </div>
-
-                        <div className="mb-4">
-                          <label className="form-label fw-semibold text-muted small text-uppercase">Date *</label>
-                          <Field
-                            type="date"
-                            name="date"
-                            className="form-control "
-                            max={new Date().toISOString().split('T')[0]}
-                          />
-                          <ErrorMessage name="date" component="div" className="text-danger small mt-1" />
-                        </div>
-
-                        <div className="mb-4">
-                          <label className="form-label fw-semibold text-muted small text-uppercase">Status *</label>
-                          <div className="mt-3">
-                            <div className="form-check form-check-inline me-4">
-                              <Field
-                                type="radio"
-                                name="status"
-                                value="lost"
-                                id="lost"
-                                className="form-check-input"
-                              />
-                              <label htmlFor="lost" className="form-check-label text-danger fw-semibold">
-                                Lost
-                              </label>
-                            </div>
-                            <div className="form-check form-check-inline">
-                              <Field
-                                type="radio"
-                                name="status"
-                                value="found"
-                                id="found"
-                                className="form-check-input"
-                              />
-                              <label htmlFor="found" className="form-check-label text-success fw-semibold">
-                                Found
-                              </label>
-                            </div>
+                <Formik
+                  initialValues={initialValues}
+                  validationSchema={validationSchema}
+                  onSubmit={handleSubmit}
+                >
+                  {({
+                    values,
+                    errors,
+                    touched,
+                    handleChange,
+                    handleBlur,
+                    handleSubmit,
+                    isSubmitting,
+                  }) => (
+                    <form onSubmit={handleSubmit}>
+                      <div className="row">
+                        <div className="col-md-6">
+                          {/* Title */}
+                          <div className="mb-4">
+                            <label className="form-label fw-semibold text-muted small text-uppercase">
+                              Item Title *
+                            </label>
+                            <input
+                              type="text"
+                              name="title"
+                              className="form-control"
+                              placeholder="e.g., iPhone 13 Pro"
+                              value={values.title}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                            />
+                            <ErrorMessage
+                              name="title"
+                              component="div"
+                              className="text-danger small mt-1"
+                            />
                           </div>
-                          <ErrorMessage name="status" component="div" className="text-danger small mt-1" />
-                        </div>
-                      </div>
 
-                      <div className="col-md-6">
-                        <div className="mb-4">
-                          <label className="form-label fw-semibold text-muted small text-uppercase">Description *</label>
-                          <Field
-                            as="textarea"
-                            name="description"
-                            rows="4"
-                            className="form-control"
-                            placeholder="Detailed description of the item..."
-                          />
-                          <ErrorMessage name="description" component="div" className="text-danger small mt-1" />
-                        </div>
-
-                        <div className="mb-4">
-                          <label className="form-label fw-semibold text-muted small text-uppercase">Your Name *</label>
-                          <Field
-                            type="text"
-                            name="contactName"
-                            className="form-control"
-                            placeholder="Your full name"
-                          />
-                          <ErrorMessage name="contactName" component="div" className="text-danger small mt-1" />
-                        </div>
-
-                        <div className="mb-4">
-                          <label className="form-label fw-semibold text-muted small text-uppercase">Email *</label>
-                          <Field
-                            type="email"
-                            name="contactEmail"
-                            className="form-control"
-                            placeholder="your@email.com"
-                          />
-                          <ErrorMessage name="contactEmail" component="div" className="text-danger small mt-1" />
-                        </div>
-
-                        <div className="mb-4">
-                          <label className="form-label fw-semibold text-muted small text-uppercase">Phone Number *</label>
-                          <Field
-                            type="tel"
-                            name="contactPhone"
-                            className="form-control "
-                            placeholder="+92-300-1234567"
-                          />
-                          <ErrorMessage name="contactPhone" component="div" className="text-danger small mt-1" />
-                        </div>
-                      </div>
-                    </div>
-<div className="mb-5">
-                      <h4 className="mb-4 d-flex align-items-center">
-                        <Camera size={20} className="me-2" />
-                        Supporting Images (Optional)
-                      </h4>
-                      <div className="card border-2 border-dashed">
-                        <div className="card-body text-center p-4">
-                          <Upload className="text-muted mb-3" size={48} />
-                          <p className="text-muted mb-3">
-                            Upload images that can help verify your claim (receipts, photos of the item, etc.)
-                          </p>
-                          <input
-                            type="file"
-                            multiple
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="d-none"
-                            id="image-upload"
-                          />
-                          <label
-                            htmlFor="image-upload"
-                            className="btn btn-primary"
-                          >
-                            Choose Images
-                          </label>
-                          <p className="small text-muted mt-2 mb-0">Maximum 5 images, up to 10MB each</p>
-                        </div>
-
-                        {uploadedImages.length > 0 && (
-                          <div className="card-body border-top">
-                            <h6 className="mb-3">Uploaded Images:</h6>
-                            <div className="row g-3">
-                              {uploadedImages.map((image) => (
-                                <div key={image.id} className="col-6 col-md-4 col-lg-3">
-                                  <div className="position-relative">
-                                    <img
-                                      src={image.preview}
-                                      alt={image.name}
-                                      className="img-fluid rounded border"
-                                      style={{height: '100px', objectFit: 'cover', width: '100%'}}
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => removeImage(image.id)}
-                                      className="btn btn-danger btn-sm position-absolute top-0 end-0 translate-middle rounded-circle p-1"
-                                      style={{width: '24px', height: '24px'}}
-                                    >
-                                      <X size={14} />
-                                    </button>
-                                    <p className="small text-muted mt-1 mb-0 text-truncate">{image.name}</p>
-                                  </div>
-                                </div>
+                          {/* Category */}
+                          <div className="mb-4">
+                            <label className="form-label fw-semibold text-muted small text-uppercase">
+                              Category *
+                            </label>
+                            <select
+                              name="category"
+                              className="form-select"
+                              value={values.category}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                            >
+                              <option value="">Select category</option>
+                              {categories.map((cat) => (
+                                <option key={cat} value={cat}>
+                                  {cat}
+                                </option>
                               ))}
-                            </div>
+                            </select>
+                            <ErrorMessage
+                              name="category"
+                              component="div"
+                              className="text-danger small mt-1"
+                            />
                           </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="d-flex justify-content-end gap-2 pt-3 border-top">
-                      <button
-                        type="button"
-                        className="btn btn-outline-secondary"
-                        onClick={() => window.history.back()}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        className="btn btn-primary d-flex align-items-center gap-2"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <div className="spinner-border spinner-border-sm" role="status">
-                              <span className="visually-hidden">Loading...</span>
+
+                          {/* Location */}
+                          <div className="mb-4">
+                            <label className="form-label fw-semibold text-muted small text-uppercase">
+                              Location *
+                            </label>
+                            <input
+                              type="text"
+                              name="location"
+                              className="form-control"
+                              placeholder="e.g., Library 2nd Floor"
+                              value={values.location}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                            />
+                            <ErrorMessage
+                              name="location"
+                              component="div"
+                              className="text-danger small mt-1"
+                            />
+                          </div>
+
+                          {/* Date */}
+                          <div className="mb-4">
+                            <label className="form-label fw-semibold text-muted small text-uppercase">
+                              Date *
+                            </label>
+                            <input
+                              type="date"
+                              name="date"
+                              className="form-control"
+                              max={new Date().toISOString().split('T')[0]}
+                              value={values.date}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                            />
+                            <ErrorMessage
+                              name="date"
+                              component="div"
+                              className="text-danger small mt-1"
+                            />
+                          </div>
+
+                          {/* Status */}
+                          <div className="mb-4">
+                            <label className="form-label fw-semibold text-muted small text-uppercase">
+                              Status *
+                            </label>
+                            <div className="mt-3">
+                              <div className="form-check form-check-inline me-4">
+                                <input
+                                  type="radio"
+                                  name="status"
+                                  id="lost"
+                                  value="lost"
+                                  checked={values.status === 'lost'}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  className="form-check-input"
+                                />
+                                <label
+                                  htmlFor="lost"
+                                  className="form-check-label text-danger fw-semibold"
+                                >
+                                  Lost
+                                </label>
+                              </div>
+                              <div className="form-check form-check-inline">
+                                <input
+                                  type="radio"
+                                  name="status"
+                                  id="found"
+                                  value="found"
+                                  checked={values.status === 'found'}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  className="form-check-input"
+                                />
+                                <label
+                                  htmlFor="found"
+                                  className="form-check-label text-success fw-semibold"
+                                >
+                                  Found
+                                </label>
+                              </div>
                             </div>
-                            Submitting...
-                          </>
-                        ) : (
-                          'Submit Claim'
-                        )}
+                            <ErrorMessage
+                              name="status"
+                              component="div"
+                              className="text-danger small mt-1"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="col-md-6">
+                          {/* Description */}
+                          <div className="mb-4">
+                            <label className="form-label fw-semibold text-muted small text-uppercase">
+                              Description *
+                            </label>
+                            <textarea
+                              name="description"
+                              rows="4"
+                              className="form-control"
+                              placeholder="Detailed description of the item..."
+                              value={values.description}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                            />
+                            <ErrorMessage
+                              name="description"
+                              component="div"
+                              className="text-danger small mt-1"
+                            />
+                          </div>
+
+                          {/* Contact Name */}
+                          <div className="mb-4">
+                            <label className="form-label fw-semibold text-muted small text-uppercase">
+                              Your Name *
+                            </label>
+                            <input
+                              type="text"
+                              name="contactName"
+                              className="form-control"
+                              placeholder="Your full name"
+                              value={values.contactName}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                            />
+                            <ErrorMessage
+                              name="contactName"
+                              component="div"
+                              className="text-danger small mt-1"
+                            />
+                          </div>
+
+                          {/* Email */}
+                          <div className="mb-4">
+                            <label className="form-label fw-semibold text-muted small text-uppercase">
+                              Email *
+                            </label>
+                            <input
+                              type="email"
+                              name="contactEmail"
+                              className="form-control"
+                              placeholder="your@email.com"
+                              value={values.contactEmail}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                            />
+                            <ErrorMessage
+                              name="contactEmail"
+                              component="div"
+                              className="text-danger small mt-1"
+                            />
+                          </div>
+
+                          {/* Phone Number */}
+                          <div className="mb-4">
+                            <label className="form-label fw-semibold text-muted small text-uppercase">
+                              Phone Number *
+                            </label>
+                            <input
+                              type="tel"
+                              name="contactPhone"
+                              className="form-control"
+                              placeholder="+92-300-1234567"
+                              value={values.contactPhone}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                            />
+                            <ErrorMessage
+                              name="contactPhone"
+                              component="div"
+                              className="text-danger small mt-1"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Image Upload */}
+                      <div className="mb-4">
+                        <label className="form-label fw-semibold text-muted small text-uppercase d-flex align-items-center gap-2">
+                          Upload Images (max 5)
+                          <Upload size={20} />
+                        </label>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="form-control"
+                        />
+                        <small className="text-muted">
+                          You can upload up to 5 images.
+                        </small>
+
+                        {/* Show uploaded image previews with remove */}
+                        <div className="d-flex flex-wrap mt-3 gap-3">
+                          {uploadedImages.map(({ id, preview, name }) => (
+                            <div
+                              key={id}
+                              className="position-relative border rounded"
+                              style={{ width: '100px', height: '100px' }}
+                            >
+                              <img
+                                src={preview}
+                                alt={name}
+                                className="img-fluid rounded"
+                                style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(id)}
+                                className="btn btn-sm btn-danger position-absolute top-0 end-0"
+                                style={{ borderRadius: '0 0 0.5rem 0' }}
+                                aria-label={`Remove image ${name}`}
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="btn btn-primary w-100 py-2"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? 'Submitting...' : 'Add Item'}
                       </button>
-                    </div>
-                </div>
-                )}
-              </Formik>
+                    </form>
+                  )}
+                </Formik>
+              </div>
             </div>
           </div>
-        </div>
         </div>
       </div>
     </div>

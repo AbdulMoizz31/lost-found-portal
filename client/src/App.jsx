@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { Route, Routes } from "react-router-dom"
 import { allRoutes } from './routes/allRoutes'
 import { Layout } from './components/common/layout'
+import { nonAuthRoutes } from './routes/allRoutes'
 import './App.css'
 function App() {
-  const [count, setCount] = useState(0)
+  const user = 'user'
 
   return (
     <>
@@ -16,6 +17,17 @@ function App() {
             key={idx}
           />
         ))}
+        {user?<>
+        {nonAuthRoutes.map((route, idx) => (
+          <Route
+            path={route.path}
+            element={route.component}
+            key={idx}
+          />
+        ))}
+        </>:
+        <>login to the account</>}
+        
       </Routes>
       {/* <div>
         <a href="https://vite.dev" target="_blank">
