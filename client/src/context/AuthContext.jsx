@@ -1,55 +1,34 @@
-import { useEffect, useState } from "react";
-import { auth } from "../services/firebase";
-import {
-  onAuthStateChanged,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut,
-} from "firebase/auth";
-import { AuthContext } from "./AuthContextDef";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { auth } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
-export const AuthProvider = ({
-  children,
-  allowedDomain = "umt.edu.pk", 
-}) => {
-  const [user, setUser] = useState(null);
-  const [error, setError] = useState("");
+const AuthContext = createContext();
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
+export function AuthProvider({ children }) {
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser && !currentUser.email.endsWith(`@${allowedDomain}`)) {
-        setError(`Only @${allowedDomain} emails are allowed.`);
-        signOut(auth);
-        setUser(null);
-      } else {
-        setUser(currentUser);
-        setError("");
-      }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
       setLoading(false);
     });
-    return () => unsubscribe();
-  }, [allowedDomain]);
 
-  const signInWithGoogle = async () => {
-    setError("");
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+    return unsubscribe;
+  }, []);
 
-  const signOutUser = async () => {
-    await signOut(auth);
+  const value = {
+    currentUser,
+    loading
   };
 
   return (
-    <AuthContext.Provider
-      value={{ user, error, loading, signInWithGoogle, signOutUser }}
-    >
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading && children}
     </AuthContext.Provider>
   );
-};
+}

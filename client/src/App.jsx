@@ -5,7 +5,12 @@ import { Layout } from './components/common/layout'
 import { nonAuthRoutes } from './routes/allRoutes'
 import './App.css'
 function App() {
-  const user = 'user'
+  const info = localStorage?.getItem('user')
+  console.log(info);
+  const user = JSON?.parse(info);
+  console.log(user);
+  
+  
 
   return (
     <>
@@ -17,7 +22,7 @@ function App() {
             key={idx}
           />
         ))}
-        {user?<>
+        {!user?<>
         {nonAuthRoutes.map((route, idx) => (
           <Route
             path={route.path}

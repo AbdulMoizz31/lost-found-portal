@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, signOut } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getMessaging } from 'firebase/messaging';
@@ -24,3 +24,21 @@ export const storage = getStorage(app);
 export const messaging = getMessaging(app);
 
 export default app;
+
+
+
+import { toast } from "react-toastify";
+
+export const logoutUser = (navigate) => {
+  const auth = getAuth();
+  signOut(auth)
+    .then(() => {
+      localStorage.removeItem("user");
+      toast.success("Logged out successfully!");
+      navigate("/login");
+    })
+    .catch((error) => {
+      console.error("Logout Error:", error.message);
+      toast.error("Logout failed. Try again.");
+    });
+};
